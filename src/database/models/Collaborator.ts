@@ -1,44 +1,23 @@
-//@ts-nocheck
 import mongoose from "mongoose";
+import User, { IUser, UserType } from "./User";
 
-const CollaboratorSchema = new mongoose.Schema(
+export interface ICollaborator extends IUser {}
+
+const collaboratorSchema = new mongoose.Schema<ICollaborator>(
   {
-    _id: {
-      type: String,
-      required: true,
-    },
-    password: {
-      type: String,
-      required: true,
-    },
     type: {
       type: String,
-      default: "pending",
-    },
-    last_pass_update: {
-      type: Date,
-      default: Date.now,
-    },
-    email: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      unique: true,
-      required: true,
-      validate: (email) => {
-        const emailRegex = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/;
-        return emailRegex.test(email);
-      },
+      default: UserType.Pending,
     },
   },
   {
     id: false,
     virtuals: {
       username: {
-        get() {
+        get(this: ICollaborator): string {
           return this._id;
         },
-        set(username) {
+        set(this: ICollaborator, username: string): void {
           this._id = username;
         },
       },
@@ -46,7 +25,12 @@ const CollaboratorSchema = new mongoose.Schema(
   }
 );
 
-CollaboratorSchema.set("toObject", { virtuals: true, getters: true });
-CollaboratorSchema.set("toJSON", { virtuals: true, getters: true });
+collaboratorSchema.set("toObject", { virtuals: true, getters: true });
+collaboratorSchema.set("toJSON", { virtuals: true, getters: true });
 
-export default mongoose.model("Collaborator", CollaboratorSchema);
+const Collaborator = User.discriminator<ICollaborator>(
+  "Collaborator",
+  collaboratorSchema
+);
+
+export default Collaborator;
